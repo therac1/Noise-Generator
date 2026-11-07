@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['C:/Users/bryce/Desktop/noise.ico'],
+    icon=['C:/Users/bryce/Documents/VSCode Projects/Noise1/icon.ico'],
 )
