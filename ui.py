@@ -3,6 +3,8 @@ from PIL import Image, ImageTk
 import numpy as np
 from noise_handler import gen_fpn, gen_vn, rescale
 from typing import Literal
+import os, sys
+
 
 from tkinter import ttk
 THEME_BG = "#302f2f"
@@ -125,7 +127,8 @@ class NoiseApp:
     def _build_storage(self):
         self.stored_var = tk.IntVar(value=1)
         self.storage_frame = self.makeWidget(tk.Frame(self.root, relief='groove', border=5), appendRow="bottom", sticky="nsew", ipady=5, ipadx=5)
-        # Button ui
+        
+        # Storage button ui
         self.storeButtons_frame = self.makeWidget(tk.Frame(self.storage_frame), sticky="EW", columnWeight=1)
 
         self.makeWidget(tk.Label(self.storeButtons_frame, text="Storage Slot #"), row=0, column=0)
@@ -136,8 +139,14 @@ class NoiseApp:
         self.makeWidget(tk.Button(self.storeButtons_frame, text="Load", command=self.pull_img), row=1, column=2)
 
 
+        # Export UI
+        self.export_frame = self.makeWidget(tk.Frame(self.storage_frame), appendCol="right", sticky="e")
+        self.export_button = self.makeWidget(tk.Button(self.export_frame, text="Export Loaded Image", command=self.export_img), sticky="e")
+
+
         # Stored images ui
-        self.storageSlots_frame = self.makeWidget(tk.Frame(self.storage_frame, relief="sunken", border=2), appendRow="bottom", pady=0)
+        self.storageSlots_frame = self.makeWidget(tk.Frame(self.storage_frame, relief="sunken", border=2), column=0, appendRow="bottom", pady=0)
+        self.storageSlots_frame.grid_configure(columnspan=2)
 
         self.storageSlots_canvas = self.makeWidget(
             tk.Canvas(self.storageSlots_frame),
@@ -168,9 +177,9 @@ class NoiseApp:
         elif self.option_var.get() == "Voronoi Noise":
             self.current_img = gen_vn(res, (self.vn["cellsX"].get(), self.vn["cellsY"].get()), self.univ["seed"].get(), self.vn["shake"].get(), self.vn["returnMode"].get())
         else: return;
-        self._show_image(self.current_img)
+        self._display_image(self.current_img)
 
-    def _show_image(self, img):
+    def _display_image(self, img):
         if np.linalg.norm(img.size) < 400:
             img = img.resize(rescale(img.size, 512), Image.Resampling.NEAREST)
         photo = ImageTk.PhotoImage(img)
@@ -215,4 +224,12 @@ class NoiseApp:
     def pull_img(self):
         num = self.stored_var.get()
         self.current_img = self.stored_imgs[num]
-        self._show_image(self.current_img)
+        self._display_image(self.current_img)
+
+    def export_img(self):
+        self.current_img.save(os.path.join(self.get_exe_dir(), "output.png"))
+
+    def get_exe_dir(self):
+        if getattr(sys, 'frozen', False):  # running as bundled exe
+            return os.path.dirname(os.path.abspath(sys.executable))
+        return os.path.dirname(os.path.abspath(__file__))
